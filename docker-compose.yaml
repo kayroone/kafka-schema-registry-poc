@@ -1,6 +1,6 @@
 services:
   kafka:
-    image: bitnami/kafka:3.9.0
+    image: confluentinc/cp-kafka:latest
     container_name: infrastructure-kafka
     hostname: kafka
     restart: on-failure
@@ -8,13 +8,11 @@ services:
       - "9092:9092"
       - "9094:9094"
       - "29092:29092"
-    volumes:
-      - "kafka_data:/bitnami"
     env_file:
       - .env.infrastructure
 
   kafka-ui:
-    image: provectuslabs/kafka-ui:v0.7.2
+    image: provectuslabs/kafka-ui:latest
     container_name: infrastructure-kafka-ui
     restart: on-failure
     ports:
@@ -25,7 +23,7 @@ services:
       - .env.infrastructure
 
   schema-registry:
-    image: confluentinc/cp-schema-registry:7.8.0
+    image: confluentinc/cp-schema-registry:latest
     container_name: infrastructure-schema-registry
     restart: on-failure
     ports:

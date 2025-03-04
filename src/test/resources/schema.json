@@ -1,0 +1,9 @@
+{
+  "type": "object",
+  "properties": {
+    "id": { "type": "integer" },
+    "username": { "type": "string", "minLength": 3 },
+    "email": { "type": "string", "format": "email" }
+  },
+  "required": ["id", "username", "email"]
+}

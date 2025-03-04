@@ -1,0 +1,11 @@
+package de.jwiegmann.registry.poc;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class KafkaSchemaRegistryPocApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(KafkaSchemaRegistryPocApplication.class, args);
+    }
+}
