@@ -77,12 +77,18 @@ public class KafkaConsumerService {
      * @param message die zu validierende JSON-Nachricht als String
      * @return {@code true}, wenn die Nachricht dem Schema entspricht, ansonsten {@code false}
      */
-    public boolean validateAgainstSchema(String message) {
+    public boolean validateAgainstSchema(final String message) {
         try {
             JsonNode jsonNode = objectMapper.readTree(message);
             Set<ValidationMessage> errors = schema.validate(jsonNode);
-            return errors.isEmpty();
+            if (!errors.isEmpty()) {
+                System.err.println("❌ Schema-Validierung fehlgeschlagen! Fehler:");
+                errors.forEach(error -> System.err.println("   ➤ " + error.getMessage()));
+                return false;
+            }
+            return true;
         } catch (Exception e) {
+            System.err.println("❌ Fehler beim Parsen der JSON-Nachricht: " + e.getMessage());
             return false;
         }
     }

@@ -28,6 +28,7 @@ public class KafkaConsumerIntegrationTest extends TestBase {
 
     @Test
     public void testInvalidMessage() throws Exception {
+        // email fehlt
         String invalidMessage = "{\"id\":1,\"username\":\"testuser\"}";
         kafkaTemplate.send("my-topic", invalidMessage);
         Thread.sleep(2000);
