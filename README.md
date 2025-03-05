@@ -6,11 +6,11 @@ kommen Testcontainers zum Einsatz, um Kafka und die Schema Registry in Integrati
 
 ```mermaid
 flowchart TD
-    D[Container & App Startup / Topic Creation ] --> D1[Load JSON Schema from file]
-    D1[Load JSON Schema from file] --> D3[Register JSON Schema in Schema Registry]
+    D[Kafka-/Schema-Registry-Container & App Startup] --> D1[Load JSON Schema from file]
+    D1[Load JSON-Schema from file] --> D3[Register JSON-Schema in Schema-Registry]
     D3 --> E[KafkaConsumerService retrieves schema from Registry]
     E --> F[Consume messages from my-topic]
-    F --> G[Validate message against JSON Schema]
+    F --> G[Validate message against JSON-Schema]
 ```
 
 ## Features
