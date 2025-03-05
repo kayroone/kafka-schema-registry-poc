@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.schema.JsonSchema;
 import com.networknt.schema.ValidationMessage;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
@@ -19,9 +20,18 @@ public class KafkaConsumerService {
     private final JsonSchema schema;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public KafkaConsumerService(SchemaRegistryService registryService,
+    private final SchemaRegistryService registryService;
+    private final String schemaSubject;
+
+    public KafkaConsumerService(@Lazy SchemaRegistryService registryService,
                                 @Value("${schema.subject}") String schemaSubject) throws Exception {
-        this.schema = registryService.getLatestSchema(schemaSubject);
+        this.registryService = registryService;
+        this.schemaSubject = schemaSubject;
+        this.schema = loadSchema();
+    }
+
+    private JsonSchema loadSchema() throws Exception {
+        return registryService.getLatestSchema(schemaSubject);
     }
 
     public boolean validateAgainstSchema(String message) {
@@ -45,3 +55,4 @@ public class KafkaConsumerService {
         return validMessages;
     }
 }
+

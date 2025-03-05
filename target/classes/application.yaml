@@ -1,0 +1,8 @@
+schema:
+  registry:
+    url: http://schema-registry:8081
+  subject: my-topic-value
+
+kafka:
+  topic: my-topic
+  group: test-group
