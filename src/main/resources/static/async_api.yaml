@@ -1,0 +1,27 @@
+asyncapi: '2.6.0'
+info:
+  title: Kafka Schema Showcase
+  version: '1.0.0'
+  description: |
+    Dieses AsyncAPI-Dokument zeigt, wie ein JSON Schema direkt aus der Schema Registry referenziert werden kann.
+
+servers:
+  kafka-broker:
+    url: '{KAFKA_BOOTSTRAP_SERVERS}'
+    protocol: kafka
+
+channels:
+  my-topic:
+    description: 'Topic für Nachrichten mit validiertem JSON Schema'
+    subscribe:
+      summary: 'Empfängt Nachrichten mit JSON Schema'
+      message:
+        contentType: application/json
+        payload:
+          $ref: 'http://localhost:8081/subjects/my-topic-value/versions/latest/schema'
+
+components:
+  securitySchemes:
+    kafkaAuth:
+      type: userPassword
+      description: 'Kafka Authentication falls notwendig'

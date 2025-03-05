@@ -1,9 +1,9 @@
 package de.jwiegmann.registry.poc.control.testcontainers;
 
 import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.KafkaContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
-import org.testcontainers.containers.KafkaContainer;
 
 import static de.jwiegmann.registry.poc.control.testcontainers.TestBase.CONFLUENT_PLATFORM_VERSION;
 
@@ -19,7 +19,10 @@ public class SchemaRegistryContainer extends GenericContainer<SchemaRegistryCont
     public SchemaRegistryContainer(String version) {
         super(SCHEMA_REGISTRY_IMAGE + ":" + version);
         waitingFor(Wait.forHttp("/subjects").forStatusCode(200));
+
+        // Explizit den Port 8081 auf den Host mappen
         withExposedPorts(SCHEMA_REGISTRY_PORT);
+        addFixedExposedPort(8081, 8081);
     }
 
     public SchemaRegistryContainer withKafka(KafkaContainer kafka) {
@@ -32,5 +35,12 @@ public class SchemaRegistryContainer extends GenericContainer<SchemaRegistryCont
         withEnv("SCHEMA_REGISTRY_LISTENERS", "http://0.0.0.0:8081");
         withEnv("SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS", "PLAINTEXT://" + bootstrapServers);
         return self();
+    }
+
+    /**
+     * Gibt die Schema Registry URL für den lokalen Zugriff zurück.
+     */
+    public String getLocalSchemaRegistryUrl() {
+        return "http://localhost:" + getMappedPort(SCHEMA_REGISTRY_PORT);
     }
 }

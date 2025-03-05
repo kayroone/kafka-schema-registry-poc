@@ -69,8 +69,7 @@ public class TestBase {
     @DynamicPropertySource
     static void registerProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.kafka.bootstrap-servers", KAFKA_CONTAINER::getBootstrapServers);
-        registry.add("schema.registry.url", () ->
-                "http://" + SCHEMA_REGISTRY_CONTAINER.getHost() + ":" + SCHEMA_REGISTRY_CONTAINER.getFirstMappedPort());
+        registry.add("schema.registry.url", SCHEMA_REGISTRY_CONTAINER::getLocalSchemaRegistryUrl);
     }
 
     /**
@@ -80,11 +79,8 @@ public class TestBase {
      */
     @BeforeAll
     public static void startContainersAndSetUpSchema() throws Exception {
-        // Starte Schema Registry-Container und verknüpfe ihn mit dem Kafka-Container
         SCHEMA_REGISTRY_CONTAINER.withKafka(KAFKA_CONTAINER).start();
-        // Erstelle das Topic "my-topic" (mit 1 Partition und Replikationsfaktor 1)
         createTopic("my-topic");
-        // Registriere das JSON-Schema in der Schema Registry
         setUpSchemaRegistry();
     }
 
