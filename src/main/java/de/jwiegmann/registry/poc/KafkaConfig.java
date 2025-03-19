@@ -3,6 +3,7 @@ package de.jwiegmann.registry.poc;
 import de.jwiegmann.registry.poc.control.dto.MyKafkaMessage;
 import io.confluent.kafka.serializers.json.KafkaJsonSchemaDeserializer;
 import io.confluent.kafka.serializers.json.KafkaJsonSchemaSerializer;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -13,12 +14,14 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.*;
+import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @EnableKafka
 @Configuration
+@Slf4j
 public class KafkaConfig {
 
     @Value("${spring.kafka.bootstrap-servers}")
@@ -27,25 +30,31 @@ public class KafkaConfig {
     @Value("${schema.registry.url}")
     private String schemaRegistryUrl;
 
+    @Value("${schema.id}")
+    private String schemaId;
+
     // ============================================================================
     // PRODUCER CONFIGURATION
     // ============================================================================
 
     @Bean
-    public ProducerFactory<String, Object> producerFactory() {
+    public ProducerFactory<String, MyKafkaMessage> producerFactory() {
         Map<String, Object> configProps = new HashMap<>();
 
-        configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
 
         // Value Serializer: JSON Schema Serializer
         configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaJsonSchemaSerializer.class);
 
         // Schema Registry URL
-        configProps.put("schema.registry.url", "http://localhost:8081");
+        configProps.put("schema.registry.url", schemaRegistryUrl);
 
-        // Optional: Automatische Schema Registrierung (je nach Use Case) - für lokale Entwicklung -> Auf INT/DEV nicht zu empfehlen
-        configProps.put("auto.register.schemas", true);
+        // Optional: Automatische Schema-Generierung aus DTO UND Registrierung in der Registry - nur für lokale Entwicklung!
+        configProps.put("auto.register.schemas", false);
+        configProps.put("use.latest.version", true);
+
+        configProps.put("latest.compatibility.strict", false);
 
         // Optional: ID-Strategie, hier kann die Bildung für das Naming der Schema-Files hinterlegt werden: Standard ist Subject-Name = topic-name + -value.
         // configProps.put("value.subject.name.strategy", CustomStrategy.class);
@@ -54,7 +63,7 @@ public class KafkaConfig {
     }
 
     @Bean
-    public KafkaTemplate<String, Object> kafkaTemplate() {
+    public KafkaTemplate<String, MyKafkaMessage> kafkaTemplate() {
         return new KafkaTemplate<>(producerFactory());
     }
 
@@ -70,19 +79,27 @@ public class KafkaConfig {
         configProps.put(ConsumerConfig.GROUP_ID_CONFIG, "my-group");
         configProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
-        // KafkaDeserializer für Key & Value
+        // KafkaDeserializer für Key, Value und Error
         configProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        configProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, KafkaJsonSchemaDeserializer.class);
+        configProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
+        configProps.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS, KafkaJsonSchemaDeserializer.class);
+
+        configProps.put(ErrorHandlingDeserializer.VALUE_FUNCTION, SchemaValidationErrorHandler.class);
 
         // Schema Registry URL
         configProps.put("schema.registry.url", schemaRegistryUrl);
 
         // Damit MyKafkaMessage gemappt wird
-        configProps.put("specific.json.reader", true);
+        configProps.put("json.value.type", de.jwiegmann.registry.poc.control.dto.MyKafkaMessage.class.getName());
 
-        // Optional: Subject Name Strategy
-        configProps.put("value.subject.name.strategy",
-                "io.confluent.kafka.serializers.subject.TopicRecordNameStrategy");
+        configProps.put("json.fail.invalid.schema", true);
+        configProps.put("specific.json.reader", true);
+        configProps.put("use.latest.version", true);
+        configProps.put("latest.compatibility.strict", false);
+
+        // Optional: ID-Strategie, hier kann die Bildung für das Naming der Schema-Files hinterlegt werden: Standard ist Subject-Name = topic-name + -value.
+        //configProps.put("value.subject.name.strategy",
+        //        "io.confluent.kafka.serializers.subject.TopicRecordNameStrategy");
 
         return new DefaultKafkaConsumerFactory<>(configProps);
     }
@@ -91,7 +108,6 @@ public class KafkaConfig {
     public ConcurrentKafkaListenerContainerFactory<String, MyKafkaMessage> kafkaListenerContainerFactory() {
         ConcurrentKafkaListenerContainerFactory<String, MyKafkaMessage> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
-
         factory.setConsumerFactory(consumerFactory());
         return factory;
     }

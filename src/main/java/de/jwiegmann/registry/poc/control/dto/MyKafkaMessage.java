@@ -2,9 +2,11 @@ package de.jwiegmann.registry.poc.control.dto;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.Min;
 
 public class MyKafkaMessage {
 
+    @Min(1)
     private final String id;
     private final String message;
     private final int version;

@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.admin.NewTopic;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.springframework.http.*;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -42,6 +43,7 @@ public class TestBase {
     private static final Network KAFKA_NETWORK = Network.newNetwork();
     private static final DockerImageName KAFKA_IMAGE = DockerImageName.parse("confluentinc/cp-kafka")
             .withTag(CONFLUENT_PLATFORM_VERSION);
+    private static int schemaId;
 
     /**
      * KafkaContainer, der für die Tests verwendet wird.
@@ -70,6 +72,8 @@ public class TestBase {
     static void registerProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.kafka.bootstrap-servers", KAFKA_CONTAINER::getBootstrapServers);
         registry.add("schema.registry.url", SCHEMA_REGISTRY_CONTAINER::getLocalSchemaRegistryUrl);
+        registry.add("schema.id", () -> schemaId);
+        registry.add("auto.register.schemas", () -> false);
     }
 
     /**
@@ -81,36 +85,24 @@ public class TestBase {
     public static void startContainersAndSetUpSchema() throws Exception {
         SCHEMA_REGISTRY_CONTAINER.withKafka(KAFKA_CONTAINER).start();
         createTopic("my-topic");
-        setUpSchemaRegistry();
+        schemaId = setUpSchemaRegistry();
     }
 
     /**
      * Registriert das JSON-Schema in der Schema Registry für das Subject "my-topic-value".
      * Falls das Schema bereits existiert, wird keine erneute Registrierung vorgenommen.
      *
+     * @return die Schema-ID des registrierten (oder existierenden) Schemas
      * @throws Exception if an error occurs during schema registration
      */
-    public static void setUpSchemaRegistry() throws Exception {
+    public static int setUpSchemaRegistry() throws Exception {
         String schemaJson = loadSchemaFromFile();
 
         String host = SCHEMA_REGISTRY_CONTAINER.getHost();
         Integer port = SCHEMA_REGISTRY_CONTAINER.getMappedPort(8081);
         String subject = "my-topic-value";
 
-        String urlLatest = "http://" + host + ":" + port + "/subjects/" + subject + "/versions/latest";
         String urlRegister = "http://" + host + ":" + port + "/subjects/" + subject + "/versions";
-
-        try {
-            ResponseEntity<JsonNode> response = restTemplate.getForEntity(urlLatest, JsonNode.class);
-            if (response.getStatusCode() == HttpStatus.OK) {
-                System.out.println("Schema for subject '" + subject + "' already exists: " + response.getBody());
-                return;
-            }
-        } catch (HttpClientErrorException e) {
-            if (!e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
-                throw e;
-            }
-        }
 
         ObjectNode request = mapper.createObjectNode();
         request.put("schemaType", "JSON");
@@ -122,7 +114,12 @@ public class TestBase {
 
         ResponseEntity<JsonNode> registerResponse = restTemplate.postForEntity(urlRegister, entity, JsonNode.class);
         assertTrue(registerResponse.getStatusCode().is2xxSuccessful(), "Schema could not be registered in the Registry");
-        System.out.println("Schema successfully registered: " + registerResponse.getBody());
+
+        JsonNode responseBody = registerResponse.getBody();
+        int schemaId = responseBody != null ? responseBody.get("id").asInt() : -1;
+
+        System.out.println("Schema successfully registered with ID: " + schemaId);
+        return schemaId;
     }
 
     /**
