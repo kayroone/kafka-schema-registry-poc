@@ -29,6 +29,20 @@
         </dependencies>
     </dependencyManagement>
 
+    <repositories>
+        <!-- Maven Central (Standard Repository) -->
+        <repository>
+            <id>central</id>
+            <url>https://repo.maven.apache.org/maven2</url>
+        </repository>
+
+        <!-- Confluent Maven Repository -->
+        <repository>
+            <id>confluent</id>
+            <url>https://packages.confluent.io/maven/</url>
+        </repository>
+    </repositories>
+
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>

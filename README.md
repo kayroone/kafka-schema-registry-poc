@@ -14,7 +14,6 @@ flowchart TD
   C --> D[Message stored in Topic with Schema-ID]
   E[Kafka Consumer] --> F[KafkaJsonSchemaDeserializer retrieves schema from Registry]
   F --> G[Validate message automatically during deserialization]
-
 ```
 
 ## Features
