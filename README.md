@@ -8,11 +8,13 @@ JSON Schemas zu validieren**, die in der Schema Registry verwaltet werden.
 
 ```mermaid
 flowchart TD
-    A[Kafka-/Schema-Registry-Container & App Startup] --> B[KafkaJsonSchemaSerializer validates payload against JSON Schema from Registry]
-    B --> C[Producer sends validated message to Kafka]
-    C --> D[Message stored in Topic with Schema-ID]
-    E[Kafka Consumer] --> F[KafkaJsonSchemaDeserializer retrieves schema from Registry]
-    F --> G[Validate message automatically during deserialization]
+  A[Kafka-/Schema-Registry-Container Startup] --> Z[Manual Schema-Registration in Schema Registry]
+  Z --> B[KafkaJsonSchemaSerializer validates payload against JSON Schema from Registry]
+  B --> C[Producer sends validated message to Kafka]
+  C --> D[Message stored in Topic with Schema-ID]
+  E[Kafka Consumer] --> F[KafkaJsonSchemaDeserializer retrieves schema from Registry]
+  F --> G[Validate message automatically during deserialization]
+
 ```
 
 ## Features

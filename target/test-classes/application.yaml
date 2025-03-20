@@ -1,11 +1,20 @@
 schema:
   registry:
     url: http://schema-registry:8081
-  subject: my-topic-value
+    subject: de.jwiegmann.registry.poc.control.dto.MyKafkaMessage
 
 kafka:
   topic: my-topic
   group: test-group
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+    urls:
+      - name: AsyncAPI
+        url: /async_api.yaml
 
 #logging:
 #  level:
