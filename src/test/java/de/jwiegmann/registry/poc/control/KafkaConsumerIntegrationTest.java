@@ -30,9 +30,6 @@ public class KafkaConsumerIntegrationTest extends TestBase {
     public void testValidMessage() {
         MyKafkaMessage validMessage = new MyKafkaMessage("1", "Dies ist eine gültige Nachricht", 1);
 
-        log.info("Class being sent: {}", validMessage.getClass().getName());
-        log.info("Class being sent: {}", validMessage.getClass().getSimpleName());
-
         kafkaTemplate.send("my-topic", validMessage);
 
         await().atMost(5, TimeUnit.SECONDS)
@@ -48,9 +45,6 @@ public class KafkaConsumerIntegrationTest extends TestBase {
     public void testInvalidMessage() {
         // Beispiel für eine ungültige Nachricht: version negativ
         MyKafkaMessage invalidMessage = new MyKafkaMessage("2", "Ungültige Nachricht", -1);
-
-        log.info("Class being sent: {}", invalidMessage.getClass().getName());
-        log.info("Class being sent: {}", invalidMessage.getClass().getSimpleName());
 
         kafkaTemplate.send("my-topic", invalidMessage);
 
