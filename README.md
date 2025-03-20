@@ -1,88 +1,95 @@
 # Kafka Schema Registry PoC
 
-Dieses Proof-of-Concept demonstriert, wie man eine Spring Boot Applikation erstellt, die Kafka-Nachrichten konsumiert,
-diese gegen ein JSON-Schema validiert und das Schema dynamisch aus der Confluent Schema Registry abruft. Zusätzlich
-kommen Testcontainers zum Einsatz, um Kafka und die Schema Registry in Integrationstests bereitzustellen.
+Dieses Proof-of-Concept demonstriert, wie man eine Spring Boot Applikation erstellt, die Kafka-Nachrichten produziert
+und konsumiert, wobei die **Confluent-Schema-Registry** zur **Schema-Validierung** genutzt wird.  
+
+Die Applikation verwendet die **Confluent KafkaJsonSchemaSerializer/Deserializer**, um Nachrichten **automatisch gegen
+JSON Schemas zu validieren**, die in der Schema Registry verwaltet werden.
 
 ```mermaid
 flowchart TD
-    D[Kafka-/Schema-Registry-Container & App Startup] --> D1[Load JSON Schema from file]
-    D1[Load JSON-Schema from file] --> D3[Register JSON-Schema in Schema-Registry]
-    D3 --> E[KafkaConsumerService retrieves schema from Registry]
-    E --> F[Consume messages from my-topic]
-    F --> G[Validate message against JSON-Schema]
+    A[Kafka-/Schema-Registry-Container & App Startup] --> B[KafkaJsonSchemaSerializer validates payload against JSON Schema from Registry]
+    B --> C[Producer sends validated message to Kafka]
+    C --> D[Message stored in Topic with Schema-ID]
+    E[Kafka Consumer] --> F[KafkaJsonSchemaDeserializer retrieves schema from Registry]
+    F --> G[Validate message automatically during deserialization]
 ```
 
 ## Features
 
 - **Kafka Integration:**  
-  Nachrichten werden aus einem Kafka-Topic konsumiert.
+Nachrichten werden in Kafka-Topics produziert und konsumiert.
 
-- **Schema Validation:**  
-  Eingehende Nachrichten werden gegen ein JSON-Schema validiert, das in der Schema Registry hinterlegt ist.
+
+- **Schema Validation über Confluent Serializer/Deserializer:** 
+
+  Die Serialisierung und Deserialisierung übernimmt automatisch die Schema-Validierung gegen die Confluent Schema Registry.
+  Eine separate, manuelle Validierung ist **nicht notwendig**.
+
 
 - **Dynamische Schema Registry:**  
-  Das Schema wird zur Laufzeit über einen REST-Call aus der Confluent Schema Registry abgerufen.
+  Die Applikation holt das Schema **zur Laufzeit** automatisch aus der Schema Registry.
+
 
 - **Testcontainers:**  
-  Automatisierter Start von Kafka- und Schema Registry-Containern im Integrationstest.
+  Kafka- und Schema Registry-Container werden für Integrationstests automatisch bereitgestellt.
+
 
 - **Kafka Admin:**  
   Erstellung von Topics über den Kafka-AdminClient im Setup.
 
 ## Architektur
 
-- **Spring Boot Applikation:**  
-  Nutzt Spring Kafka, um Nachrichten aus dem Topic zu konsumieren, und validiert diese mithilfe des JSON Schema
-  Validators.
+- **Spring Boot Applikation mit Spring Kafka**  
+  Die Applikation nutzt Spring Kafka und die Confluent SerDes:
+  - **Producer** verwendet `KafkaJsonSchemaSerializer`
+  - **Consumer** verwendet `KafkaJsonSchemaDeserializer`  
+    Diese Komponenten holen automatisch die richtigen Schemas aus der Registry und validieren Nachrichten bei der (De-)Serialisierung.
 
-- **Schema Registry Service:**  
-  Holt das neueste JSON Schema aus der Schema Registry (unter Verwendung des `schema.registry.url` und des Subjects, z.
-  B. `my-topic-value`).
 
-- **Test Base:**  
-  Eine gemeinsame Testbasis, die Kafka- und Schema Registry-Container startet, Properties dynamisch setzt, Topics
-  erstellt und das Schema in der Registry registriert.
+- **Schema Registry**  
+  Die Schemas werden **extern verwaltet** und in der Registry gepflegt.  
+  Die Applikation registriert **keine eigenen Schemas** automatisch (`auto.register.schemas=false`).
 
-## Voraussetzungen
 
-- **Java 17 oder höher:**  
-  Das Projekt verwendet moderne Java-Versionen (z. B. Java 23).
-
-- **Maven:**  
-  Zum Bauen und Testen des Projekts.
-
-- **Docker:**  
-  Für den Einsatz von Testcontainers (Kafka und Schema Registry werden in Docker-Containern gestartet).
-
-## Konfiguration
-
-Die Konfiguration erfolgt größtenteils über die `application.yaml` (oder `application.properties`):
-
-- **Kafka:**  
-  Der Schlüssel `spring.kafka.bootstrap-servers` wird dynamisch per Testcontainers in den Integrationstests gesetzt.
-
-- **Schema Registry:**  
-  `schema.registry.url` wird ebenfalls dynamisch gesetzt. Das JSON Schema wird unter dem Subject (z. B.
-  `my-topic-value`) registriert.
-
-- **Schema Subject & Kafka Einstellungen:**  
-  Beispiel:
-  ```yaml
-  schema:
-    subject: my-topic-value
-  kafka:
-    topic: my-topic
-    group: test-group
+- **Test Base**  
+  Gemeinsame Testbasis, die Kafka- und Schema Registry-Container startet, Properties dynamisch setzt, Topics erstellt und Test-Schemas registriert.
 
 ## Funktionsweise
 
-- **Schema Registrierung:**  
-  Die Methode `setUpSchemaRegistry()` liest das Schema aus `src/test/resources/schema.json` und registriert es in der
-  Schema Registry. Der Request enthält explizit `"schemaType": "JSON"`, damit die Registry weiß, dass es sich um ein
-  JSON Schema handelt.
+### Produzieren von Nachrichten
+- Nachrichten werden von der Spring Kafka `KafkaTemplate` produziert.
+- Der `KafkaJsonSchemaSerializer`:
+  - Holt das JSON Schema aus der Registry.
+  - Validiert den Payload **vor dem Senden**.
+  - Fügt die **Schema-ID** in die Nachricht ein.
 
-- **Nachrichtenkonsum & Validierung:**  
-  Der `KafkaConsumerService` empfängt Nachrichten von `my-topic` und validiert sie mithilfe des abgerufenen JSON
-  Schemas. Nur gültige Nachrichten werden intern gespeichert und können über die Methode `getValidMessages()` abgefragt
-  werden.
+### Konsumieren von Nachrichten
+- Der `KafkaJsonSchemaDeserializer`:
+  - Holt das korrekte JSON Schema anhand der **Schema-ID** aus der Registry.
+  - Validiert die Nachricht beim **Deserialisieren** automatisch.
+  - Gibt wahlweise `JsonNode` oder ein spezifisches DTO (`specific.json.reader=true`) zurück.
+
+## Integrationstests
+
+Die Integrationstests nutzen **Testcontainers**, um Kafka und die Schema Registry in Docker-Containern zu starten.  
+Tests prüfen u. a.:
+- Ob Nachrichten VOR der Publizierung gegen ein Schema validiert werden
+- Ob Nachrichten bei dem Konsumieren gegen ein Schema validiert werden
+- Ob das Schema korrekt in der Registry registriert wurde.
+- Ob Nachrichten erfolgreich produziert und konsumiert werden können.
+- Ob Schema-Kompatibilität gewährleistet ist.
+
+## IT speziell für die Schema Registry Integration
+
+- Die `SchemaRegistryIntegrationTest`-Klasse prüft:
+  - Ob ein Subject in der Registry existiert.
+  - Ob das neueste Schema korrekt geladen wird.
+  - Ob neue Schemas kompatibel sind.
+  - Ob neue Versionen manuell registriert werden können.
+
+## Wichtigste Änderungen zu vorher
+
+- Die Schema-Validierung findet **vollautomatisch** durch die Confluent SerDes statt.
+- Kein manuelles Abrufen oder Validieren von Schemas im Code.
+- Fokus auf saubere Trennung von **Schema-Verwaltung (Registry)** und **Nachrichtenverarbeitung (Kafka Clients)**.
