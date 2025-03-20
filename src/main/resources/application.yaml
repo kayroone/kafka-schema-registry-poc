@@ -1,6 +1,7 @@
 schema:
   registry:
     url: http://schema-registry:8081
+    subject: de.jwiegmann.registry.poc.control.dto.MyKafkaMessage
 
 kafka:
   topic: my-topic

@@ -7,7 +7,7 @@ info:
 
 servers:
   kafka-broker:
-    url: '{KAFKA_BOOTSTRAP_SERVERS}'
+    url: 'http://localhost:9092'
     protocol: kafka
 
 channels:
@@ -18,7 +18,7 @@ channels:
       message:
         contentType: application/json
         payload:
-          $ref: 'http://localhost:8081/subjects/my-topic-value/versions/latest/schema'
+          $ref: './components/MyKafkaMessage.json'
 
 components:
   securitySchemes:

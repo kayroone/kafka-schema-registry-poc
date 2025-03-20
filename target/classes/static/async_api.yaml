@@ -18,7 +18,7 @@ channels:
       message:
         contentType: application/json
         payload:
-          $ref: 'http://localhost:8081/subjects/my-topic-value/versions/latest/schema'
+          $ref: './components/MyKafkaMessage.json'
 
 components:
   securitySchemes:
