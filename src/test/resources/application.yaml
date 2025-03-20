@@ -6,3 +6,8 @@ schema:
 kafka:
   topic: my-topic
   group: test-group
+
+#logging:
+#  level:
+#    io.confluent.kafka.serializers: DEBUG
+#    org.apache.kafka: DEBUG

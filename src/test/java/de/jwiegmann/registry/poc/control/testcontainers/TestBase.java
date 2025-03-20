@@ -3,6 +3,7 @@ package de.jwiegmann.registry.poc.control.testcontainers;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import de.jwiegmann.registry.poc.control.dto.MyKafkaMessage;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.admin.NewTopic;
@@ -100,8 +101,8 @@ public class TestBase {
 
         String host = SCHEMA_REGISTRY_CONTAINER.getHost();
         Integer port = SCHEMA_REGISTRY_CONTAINER.getMappedPort(8081);
-        String subject = "my-topic-value";
 
+        String subject = "de.jwiegmann.registry.poc.control.dto.MyKafkaMessage";
         String urlRegister = "http://" + host + ":" + port + "/subjects/" + subject + "/versions";
 
         ObjectNode request = mapper.createObjectNode();

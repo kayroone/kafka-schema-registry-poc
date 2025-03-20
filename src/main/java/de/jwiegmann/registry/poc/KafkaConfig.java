@@ -3,6 +3,7 @@ package de.jwiegmann.registry.poc;
 import de.jwiegmann.registry.poc.control.dto.MyKafkaMessage;
 import io.confluent.kafka.serializers.json.KafkaJsonSchemaDeserializer;
 import io.confluent.kafka.serializers.json.KafkaJsonSchemaSerializer;
+import io.confluent.kafka.serializers.subject.RecordNameStrategy;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -53,11 +54,9 @@ public class KafkaConfig {
         // Optional: Automatische Schema-Generierung aus DTO UND Registrierung in der Registry - nur für lokale Entwicklung!
         configProps.put("auto.register.schemas", false);
         configProps.put("use.latest.version", true);
-
         configProps.put("latest.compatibility.strict", false);
 
-        // Optional: ID-Strategie, hier kann die Bildung für das Naming der Schema-Files hinterlegt werden: Standard ist Subject-Name = topic-name + -value.
-        // configProps.put("value.subject.name.strategy", CustomStrategy.class);
+        configProps.put("value.subject.name.strategy", RecordNameStrategy.class);
 
         return new DefaultKafkaProducerFactory<>(configProps);
     }
@@ -94,12 +93,10 @@ public class KafkaConfig {
 
         configProps.put("json.fail.invalid.schema", true);
         configProps.put("specific.json.reader", true);
-        configProps.put("use.latest.version", true);
-        configProps.put("latest.compatibility.strict", false);
 
-        // Optional: ID-Strategie, hier kann die Bildung für das Naming der Schema-Files hinterlegt werden: Standard ist Subject-Name = topic-name + -value.
-        //configProps.put("value.subject.name.strategy",
-        //        "io.confluent.kafka.serializers.subject.TopicRecordNameStrategy");
+        //configProps.put("use.latest.version", true);
+        //configProps.put("latest.compatibility.strict", false);
+        //configProps.put("value.subject.name.strategy", RecordNameStrategy.class);
 
         return new DefaultKafkaConsumerFactory<>(configProps);
     }

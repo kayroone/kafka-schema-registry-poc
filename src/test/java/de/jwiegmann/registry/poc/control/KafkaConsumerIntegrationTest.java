@@ -2,6 +2,7 @@ package de.jwiegmann.registry.poc.control;
 
 import de.jwiegmann.registry.poc.control.dto.MyKafkaMessage;
 import de.jwiegmann.registry.poc.control.testcontainers.TestBase;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -16,6 +17,7 @@ import static org.awaitility.Awaitility.await;
 
 @SpringBootTest(classes = de.jwiegmann.registry.poc.KafkaSchemaRegistryPocApplication.class)
 @DirtiesContext
+@Slf4j
 public class KafkaConsumerIntegrationTest extends TestBase {
 
     @Autowired
@@ -27,6 +29,9 @@ public class KafkaConsumerIntegrationTest extends TestBase {
     @Test
     public void testValidMessage() {
         MyKafkaMessage validMessage = new MyKafkaMessage("1", "Dies ist eine gültige Nachricht", 1);
+
+        log.info("Class being sent: {}", validMessage.getClass().getName());
+        log.info("Class being sent: {}", validMessage.getClass().getSimpleName());
 
         kafkaTemplate.send("my-topic", validMessage);
 
@@ -43,6 +48,9 @@ public class KafkaConsumerIntegrationTest extends TestBase {
     public void testInvalidMessage() {
         // Beispiel für eine ungültige Nachricht: version negativ
         MyKafkaMessage invalidMessage = new MyKafkaMessage("2", "Ungültige Nachricht", -1);
+
+        log.info("Class being sent: {}", invalidMessage.getClass().getName());
+        log.info("Class being sent: {}", invalidMessage.getClass().getSimpleName());
 
         kafkaTemplate.send("my-topic", invalidMessage);
 

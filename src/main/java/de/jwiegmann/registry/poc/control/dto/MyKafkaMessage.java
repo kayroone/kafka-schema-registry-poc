@@ -2,11 +2,13 @@ package de.jwiegmann.registry.poc.control.dto;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.validation.constraints.Min;
+import com.kjetland.jackson.jsonSchema.annotations.JsonSchemaTitle;
+import lombok.Getter;
 
+@Getter
+@JsonSchemaTitle("de.jwiegmann.registry.poc.control.dto.MyKafkaMessage")
 public class MyKafkaMessage {
 
-    @Min(1)
     private final String id;
     private final String message;
     private final int version;
@@ -20,18 +22,6 @@ public class MyKafkaMessage {
         this.id = id;
         this.message = message;
         this.version = version;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public int getVersion() {
-        return version;
     }
 
     @Override
