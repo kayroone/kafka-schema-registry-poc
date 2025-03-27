@@ -44,6 +44,9 @@ public class TestBase {
     private static final Network KAFKA_NETWORK = Network.newNetwork();
     private static final DockerImageName KAFKA_IMAGE = DockerImageName.parse("confluentinc/cp-kafka")
             .withTag(CONFLUENT_PLATFORM_VERSION);
+
+    public static final String SUBJECT_NAME = "de.jwiegmann.registry.poc.control.dto.MyKafkaMessage";
+
     private static int schemaId;
 
     /**
@@ -102,8 +105,7 @@ public class TestBase {
         String host = SCHEMA_REGISTRY_CONTAINER.getHost();
         Integer port = SCHEMA_REGISTRY_CONTAINER.getMappedPort(8081);
 
-        String subject = "de.jwiegmann.registry.poc.control.dto.MyKafkaMessage";
-        String urlRegister = "http://" + host + ":" + port + "/subjects/" + subject + "/versions";
+        String urlRegister = "http://" + host + ":" + port + "/subjects/" + SUBJECT_NAME + "/versions";
 
         ObjectNode request = mapper.createObjectNode();
         request.put("schemaType", "JSON");
