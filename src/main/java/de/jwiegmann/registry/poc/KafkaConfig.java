@@ -34,6 +34,9 @@ public class KafkaConfig {
     @Value("${schema.id}")
     private String schemaId;
 
+    @Value("${kafka.group}")
+    private String groupId;
+
     // ============================================================================
     // PRODUCER CONFIGURATION
     // ============================================================================
@@ -81,7 +84,7 @@ public class KafkaConfig {
 
         configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         configProps.put("schema.registry.url", schemaRegistryUrl);
-        configProps.put(ConsumerConfig.GROUP_ID_CONFIG, "my-group");
+        configProps.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
 
         // Holt immer alle Messages ab, wenn noch kein Offset vorhanden ist
         configProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");

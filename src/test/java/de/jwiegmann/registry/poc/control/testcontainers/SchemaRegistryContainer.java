@@ -20,9 +20,8 @@ public class SchemaRegistryContainer extends GenericContainer<SchemaRegistryCont
         super(SCHEMA_REGISTRY_IMAGE + ":" + version);
         waitingFor(Wait.forHttp("/subjects").forStatusCode(200));
 
-        // Explizit den Port 8081 auf den Host mappen
+        // Port 8081 wird dynamisch gemappt für parallele Testausführung
         withExposedPorts(SCHEMA_REGISTRY_PORT);
-        addFixedExposedPort(8081, 8081);
     }
 
     public SchemaRegistryContainer withKafka(KafkaContainer kafka) {

@@ -23,7 +23,7 @@ public class KafkaConsumerService {
      */
     @KafkaListener(topics = "${kafka.topic}", groupId = "${kafka.group}")
     public void consume(final MyKafkaMessage message) {
-        System.out.println("Empfangene & gültige Nachricht: " + message);
+        log.info("Empfangene & gültige Nachricht: {}", message);
         validMessages.add(message);
     }
 
@@ -34,5 +34,13 @@ public class KafkaConsumerService {
      */
     public List<MyKafkaMessage> getValidMessages() {
         return validMessages;
+    }
+
+    /**
+     * Leert die Liste der empfangenen Nachrichten.
+     * Nützlich für Test-Isolation.
+     */
+    public void clearMessages() {
+        validMessages.clear();
     }
 }

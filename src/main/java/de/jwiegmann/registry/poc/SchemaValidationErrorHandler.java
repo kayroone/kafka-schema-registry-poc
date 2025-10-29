@@ -3,7 +3,6 @@ package de.jwiegmann.registry.poc;
 import de.jwiegmann.registry.poc.control.dto.MyKafkaMessage;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.kafka.support.serializer.FailedDeserializationInfo;
 
 import java.util.function.Function;
@@ -12,7 +11,7 @@ import java.util.function.Function;
 @NoArgsConstructor
 public class SchemaValidationErrorHandler implements Function<FailedDeserializationInfo, MyKafkaMessage> {
 
-    private static final String SEPARATOR = StringUtils.repeat("═", 80);
+    private static final String SEPARATOR = "═".repeat(80);
 
     @Override
     public MyKafkaMessage apply(FailedDeserializationInfo info) {
